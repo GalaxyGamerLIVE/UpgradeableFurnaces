@@ -7,7 +7,7 @@ import cn.nukkit.level.Location;
 import cn.nukkit.level.Sound;
 import cn.nukkit.network.protocol.PlaySoundPacket;
 import cn.nukkit.utils.Config;
-import me.onebone.economyapi.EconomyAPI;
+import de.athoramine.core.api.AthoraPlayer;
 import net.lldv.upgradeablefurnaces.UpgradeableFurnaces;
 import net.lldv.upgradeablefurnaces.components.data.Furnace;
 import net.lldv.upgradeablefurnaces.components.data.Upgrade;
@@ -67,8 +67,8 @@ public class FurnaceAPI {
 
     public static void upgradeFurnace(Player player, Furnace furnace, Upgrade upgrade) {
         if (upgrade.getType() == UpgradeType.MONEY) {
-            if (EconomyAPI.getInstance().myMoney(player.getName()) >= upgrade.getCost()) {
-                EconomyAPI.getInstance().reduceMoney(player.getName(), upgrade.getCost());
+            if (AthoraPlayer.getPurse(player) >= upgrade.getCost()) {
+                AthoraPlayer.setPurse(player, (AthoraPlayer.getPurse(player) - upgrade.getCost()));
                 furnace.setUpgrade(furnace.getUpgrade() + 1);
                 setUpgrade(furnace);
                 player.sendMessage(Language.getAndReplace("furnace-upgraded", furnace.getUpgrade()));
