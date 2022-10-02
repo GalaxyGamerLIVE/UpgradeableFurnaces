@@ -7,7 +7,9 @@ import cn.nukkit.level.Location;
 import cn.nukkit.level.Sound;
 import cn.nukkit.network.protocol.PlaySoundPacket;
 import cn.nukkit.utils.Config;
+import de.athoramine.core.api.AthoraFurnaceAPI;
 import de.athoramine.core.api.AthoraPlayer;
+import de.athoramine.core.components.AthoraFurnace;
 import net.lldv.upgradeablefurnaces.UpgradeableFurnaces;
 import net.lldv.upgradeablefurnaces.components.data.Furnace;
 import net.lldv.upgradeablefurnaces.components.data.Upgrade;
@@ -41,6 +43,19 @@ public class FurnaceAPI {
         data.set("Furnaces." + code + ".Owner", player.getName());
         data.save();
         data.reload();
+
+        AthoraFurnace athoraFurnace = new AthoraFurnace(
+                0,
+                AthoraPlayer.getPlayerID(player),
+                1,
+                location.getLevel().getName(),
+                (int) location.getX(),
+                (int) location.getY(),
+                (int) location.getZ()
+        );
+
+        AthoraFurnaceAPI.addFurnace(athoraFurnace);
+
         cachedFurnaces.put(location, new Furnace(player.getName(), 1, (int) location.x, (int) location.y, (int) location.z, location.level));
         player.sendMessage(Language.getAndReplace("furnace-placed", 1));
         playSound(player, Sound.NOTE_XYLOPHONE);
@@ -60,6 +75,19 @@ public class FurnaceAPI {
         data.set("Furnaces." + code + ".Owner", player.getName());
         data.save();
         data.reload();
+
+        AthoraFurnace athoraFurnace = new AthoraFurnace(
+                0,
+                AthoraPlayer.getPlayerID(player),
+                level,
+                location.getLevel().getName(),
+                (int) location.getX(),
+                (int) location.getY(),
+                (int) location.getZ()
+        );
+
+        AthoraFurnaceAPI.addFurnace(athoraFurnace);
+
         cachedFurnaces.put(location, new Furnace(player.getName(), level, (int) location.x, (int) location.y, (int) location.z, location.level));
         player.sendMessage(Language.getAndReplace("furnace-placed", level));
         playSound(player, Sound.NOTE_XYLOPHONE);
@@ -101,6 +129,10 @@ public class FurnaceAPI {
         data.set("Furnaces." + id + ".Upgrade", furnace.getUpgrade());
         data.save();
         data.reload();
+
+        AthoraFurnace athoraFurnace = AthoraFurnaceAPI.getFurnace(furnace.getLevel().getName(), furnace.getX(), furnace.getY(), furnace.getZ());
+        athoraFurnace.setUpgrade(furnace.getUpgrade());
+        AthoraFurnaceAPI.updateFurnace(athoraFurnace);
     }
 
     public static void deleteFurnace(int x, int y, int z, String level) {
@@ -115,6 +147,10 @@ public class FurnaceAPI {
         data.set("Ban", map);
         data.save();
         data.reload();
+
+        AthoraFurnace athoraFurnace = AthoraFurnaceAPI.getFurnace(level, x, y, z);
+        AthoraFurnaceAPI.deleteFurnace(athoraFurnace.getId());
+
         cachedFurnaces.remove(new Location(x, y, z, Server.getInstance().getLevelByName(level)));
     }
 
@@ -137,14 +173,14 @@ public class FurnaceAPI {
     }
 
     public static void loadFurnances() {
-        for (String s : data.getSection("Furnaces").getAll().getKeys(false)) {
-            String owner = data.getString("Furnaces." + s + ".Owner");
-            int upgrade = data.getInt("Furnaces." + s + ".Upgrade");
-            int x = data.getInt("Furnaces." + s + ".X");
-            int y = data.getInt("Furnaces." + s + ".Y");
-            int z = data.getInt("Furnaces." + s + ".Z");
-            String levelString = data.getString("Furnaces." + s + ".Level");
-            Level level = Server.getInstance().getLevelByName(levelString);
+        for (AthoraFurnace athoraFurnace : AthoraFurnaceAPI.getAllFurnaces()) {
+            String owner = AthoraPlayer.getPlayerName(athoraFurnace.getPlayerID());
+            int upgrade = athoraFurnace.getUpgrade();
+            int x = athoraFurnace.getX();
+            int y = athoraFurnace.getY();
+            int z = athoraFurnace.getZ();
+            Level level = Server.getInstance().getLevelByName(athoraFurnace.getLevel());
+
             Furnace furnace = new Furnace(owner, upgrade, x, y, z, level);
             cachedFurnaces.put(new Location(x, y, z, level), furnace);
         }
